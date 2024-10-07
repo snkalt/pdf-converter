@@ -1,0 +1,34 @@
+version: '3'
+services:
+  backend:
+    build:
+      context: ./backend   # Path to backend folder
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgres://app_user:your_password@db:5432/file_conversion
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend  # Path to frontend folder
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:5001
+
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: your_password
+      POSTGRES_DB: file_conversion
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
