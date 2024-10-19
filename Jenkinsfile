@@ -27,7 +27,9 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                // Add deployment steps here (for example, Kubernetes deployment or SSH to a server)
+                // Placeholder for deployment steps (e.g., Kubernetes or server deployment)
+                // Add your deployment steps here if needed
+                echo 'Deployment stage - no steps defined yet'
             }
         }
     }
