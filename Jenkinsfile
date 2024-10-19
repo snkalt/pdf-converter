@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/your-repo/pdf-conversion-app.git', branch: 'master'
+                git url: 'https://github.com/sujay37/pdf-conversion-app.git', branch: 'master'
             }
         }
         stage('Install Dependencies') {
@@ -21,7 +21,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'docker-hub-credentials', variable: 'DOCKER_HUB_PASS')]) {
                     sh 'docker login -u sujay37 -p $DOCKER_HUB_PASS'
-                    sh 'docker push your-dockerhub-username/pdf-conversion-app'
+                    sh 'docker push sujay37/pdf-conversion-app'
                 }
             }
         }
@@ -32,15 +32,3 @@ pipeline {
         }
     }
 }
-
-pipeline {
-    agent any
-    stages {
-        stage('Test Docker Access') {
-            steps {
-                sh 'docker --version'
-            }
-        }
-    }
-}
-
