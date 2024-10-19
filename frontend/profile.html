@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Add your CSS file if you have one -->
+</head>
+<body>
+    <h1>User Profile</h1>
+    <div id="profile">
+        <p><strong>Username:</strong> <span id="username"></span></p>
+        <p><strong>Account Created:</strong> <span id="created_at"></span></p>
+    </div>
+    
+    <h2>Update Profile</h2>
+    <form id="updateProfileForm">
+        <label for="newPassword">New Password:</label>
+        <input type="password" id="newPassword" required>
+        <button type="submit">Update Profile</button>
+    </form>
+
+    <script>
+        // Fetch user profile
+        async function fetchProfile() {
+            const token = localStorage.getItem('token'); // Get token from local storage
+            const response = await fetch('http://localhost:5001/profile', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('username').innerText = data.username;
+                document.getElementById('created_at').innerText = new Date(data.created_at).toLocaleString();
+            } else {
+                console.error('Error fetching profile:', response.statusText);
+            }
+        }
+
+        // Update profile
+        document.getElementById('updateProfileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newPassword = document.getElementById('newPassword').value;
+            const token = localStorage.getItem('token'); // Get token from local storage
+
+            const response = await fetch('http://localhost:5001/profile', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ newPassword })
+            });
+
+            if (response.ok) {
+                alert('Profile updated successfully');
+                document.getElementById('newPassword').value = ''; // Clear the input
+            } else {
+                console.error('Error updating profile:', response.statusText);
+            }
+        });
+
+        // Call the function to fetch profile on load
+        window.onload = fetchProfile;
+    </script>
+</body>
+</html>
