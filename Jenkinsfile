@@ -4,12 +4,18 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                // If your repo is private, add credentialsId as below
                 git url: 'https://github.com/sujay37/pdf-conversion-app.git', branch: 'master'
             }
         }
         stage('Install Dependencies') {
             steps {
                 sh 'npm install'
+            }
+        }
+        stage('Test Docker Access') {
+            steps {
+                sh 'docker --version'
             }
         }
         stage('Build Docker Image') {
@@ -28,7 +34,6 @@ pipeline {
         stage('Deploy') {
             steps {
                 // Placeholder for deployment steps (e.g., Kubernetes or server deployment)
-                // Add your deployment steps here if needed
                 echo 'Deployment stage - no steps defined yet'
             }
         }
