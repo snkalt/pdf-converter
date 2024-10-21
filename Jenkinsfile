@@ -10,16 +10,21 @@ pipeline {
                 echo "Code Cloned Successfully"
             }
         }
-        stage("SonarQube Analysis") {
+        stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("Sonar") {
-                    sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=pdf-converter -Dsonar.projectKey=pdf-converter -X"
+                withSonarQubeEnv('Sonar') {
+                    sh '''
+                    sonar-scanner \
+                    -Dsonar.projectKey=pdf-converter \
+                    -Dsonar.projectName=pdf-converter \
+                    -Dsonar.login=${sqa_68a8af1c2802fda1fb6a440acda9f25cf7381023}
+                    '''
                 }
             }
         }
         stage("SonarQube Quality Gates") {
             steps {
-                timeout(time: 1, unit: "MINUTES") {
+                timeout(time: 2, unit: "MINUTES") { // Adjusted timeout for longer analyses
                     waitForQualityGate abortPipeline: false
                 }
             }
@@ -38,7 +43,12 @@ pipeline {
         }
         stage("Trivy") {
             steps {
-                sh "trivy image pdf-converter:latest"
+                script {
+                    def trivyResult = sh(script: "trivy image pdf-converter:latest", returnStatus: true)
+                    if (trivyResult != 0) {
+                        error "Trivy found vulnerabilities in the Docker image."
+                    }
+                }
             }
         }
         stage("Push to Private Docker Hub Repo") {
