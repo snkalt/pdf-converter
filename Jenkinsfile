@@ -1,40 +1,65 @@
-pipeline {
-    agent any
+JENKINS SCRIPT
 
+
+pipeline {
+    
+    agent any
+    environment{
+        SONAR_HOME = tool "Sonar"
+    }
     stages {
-        stage('Checkout') {
-            steps {
-                // If your repo is private, add credentialsId as below
-                git url: 'https://github.com/sujay37/pdf-conversion-app.git', branch: 'master'
+        
+        stage("Code"){
+            steps{
+                git url: "https://github.com/LondheShubham153/node-todo-cicd.git" , branch: "master"
+                echo "Code Cloned Successfully"
             }
         }
-        stage('Install Dependencies') {
-            steps {
-                sh 'npm install'
+        stage("SonarQube Analysis"){
+            steps{
+               withSonarQubeEnv("Sonar"){
+                   sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=nodetodo -Dsonar.projectKey=nodetodo -X"
+               }
             }
         }
-        stage('Test Docker Access') {
-            steps {
-                sh 'docker --version'
+        stage("SonarQube Quality Gates"){
+            steps{
+               timeout(time: 1, unit: "MINUTES"){
+                   waitForQualityGate abortPipeline: false
+               }
             }
         }
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t sujay37/pdf-conversion-app .'
+        stage("OWASP"){
+            steps{
+                dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'OWASP'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
-        stage('Push Docker Image') {
-            steps {
-                withCredentials([string(credentialsId: 'docker-hub-credentials', variable: 'DOCKER_HUB_PASS')]) {
-                    sh 'docker login -u sujay37 -p $DOCKER_HUB_PASS'
-                    sh 'docker push sujay37/pdf-conversion-app'
+        stage("Build & Test"){
+            steps{
+                sh 'docker build -t node-app-batch-6:latest .'
+                echo "Code Built Successfully"
+            }
+        }
+        stage("Trivy"){
+            steps{
+                sh "trivy image node-app-batch-6"
+            }
+        }
+        stage("Push to Private Docker Hub Repo"){
+            steps{
+                withCredentials([usernamePassword(credentialsId:"DockerHubCreds",passwordVariable:"dockerPass",usernameVariable:"dockerUser")]){
+                sh "docker login -u ${env.dockerUser} -p ${env.dockerPass}"
+                sh "docker tag node-app-batch-6:latest ${env.dockerUser}/node-app-batch-6:latest"
+                sh "docker push ${env.dockerUser}/node-app-batch-6:latest"
                 }
+                
             }
         }
-        stage('Deploy') {
-            steps {
-                // Placeholder for deployment steps (e.g., Kubernetes or server deployment)
-                echo 'Deployment stage - no steps defined yet'
+        stage("Deploy"){
+            steps{
+                sh "docker-compose up -d"
+                echo "App Deployed Successfully"
             }
         }
     }
