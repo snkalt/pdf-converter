@@ -1,63 +1,57 @@
-JENKINS SCRIPT
-
-
 pipeline {
-    
     agent any
-    environment{
+    environment {
         SONAR_HOME = tool "Sonar"
     }
     stages {
-        
-        stage("Code"){
-            steps{
-                git url: "https://github.com/LondheShubham153/node-todo-cicd.git" , branch: "master"
+        stage("Code") {
+            steps {
+                git url: "https://github.com/snkalt/pdf-converter", branch: "master"
                 echo "Code Cloned Successfully"
             }
         }
-        stage("SonarQube Analysis"){
-            steps{
-               withSonarQubeEnv("Sonar"){
-                   sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=nodetodo -Dsonar.projectKey=nodetodo -X"
-               }
+        stage("SonarQube Analysis") {
+            steps {
+                withSonarQubeEnv("Sonar") {
+                    sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=pdf-converter -Dsonar.projectKey=pdf-converter -X"
+                }
             }
         }
-        stage("SonarQube Quality Gates"){
-            steps{
-               timeout(time: 1, unit: "MINUTES"){
-                   waitForQualityGate abortPipeline: false
-               }
+        stage("SonarQube Quality Gates") {
+            steps {
+                timeout(time: 1, unit: "MINUTES") {
+                    waitForQualityGate abortPipeline: false
+                }
             }
         }
-        stage("OWASP"){
-            steps{
+        stage("OWASP") {
+            steps {
                 dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'OWASP'
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
-        stage("Build & Test"){
-            steps{
-                sh 'docker build -t node-app-batch-6:latest .'
+        stage("Build & Test") {
+            steps {
+                sh 'docker build -t pdf-converter:latest .'
                 echo "Code Built Successfully"
             }
         }
-        stage("Trivy"){
-            steps{
-                sh "trivy image node-app-batch-6"
+        stage("Trivy") {
+            steps {
+                sh "trivy image pdf-converter:latest"
             }
         }
-        stage("Push to Private Docker Hub Repo"){
-            steps{
-                withCredentials([usernamePassword(credentialsId:"DockerHubCreds",passwordVariable:"dockerPass",usernameVariable:"dockerUser")]){
-                sh "docker login -u ${env.dockerUser} -p ${env.dockerPass}"
-                sh "docker tag node-app-batch-6:latest ${env.dockerUser}/node-app-batch-6:latest"
-                sh "docker push ${env.dockerUser}/node-app-batch-6:latest"
+        stage("Push to Private Docker Hub Repo") {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "DockerHubCreds", passwordVariable: "dockerPass", usernameVariable: "dockerUser")]) {
+                    sh "docker login -u ${env.dockerUser} -p ${env.dockerPass}"
+                    sh "docker tag pdf-converter:latest ${env.dockerUser}/pdf-converter:latest"
+                    sh "docker push ${env.dockerUser}/pdf-converter:latest"
                 }
-                
             }
         }
-        stage("Deploy"){
-            steps{
+        stage("Deploy") {
+            steps {
                 sh "docker-compose up -d"
                 echo "App Deployed Successfully"
             }
