@@ -2,7 +2,9 @@ pipeline {
     agent any
     environment {
         SONAR_HOME = tool "Sonar"
+        TMPDIR = '/Users/sujaykumbhar/jenkins_temp' // Move TMPDIR here
     }
+
     stages {
         stage("Code") {
             steps {
